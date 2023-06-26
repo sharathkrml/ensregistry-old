@@ -1,6 +1,45 @@
-type ExampleEntity @entity {
-  id: ID!
-  count: BigInt!
-  node: Bytes! # bytes32
-  owner: Bytes! # address
+# Transfer(bytes32 indexed node, address owner)
+type Transfer @entity {
+    id: ID!
+    index: BigInt!
+    hash: Bytes!
+
+    node: Bytes!
+    owner: Bytes!
+}
+
+# NewOwner(bytes32 indexed node, bytes32 indexed label, address owner)
+type NewOwner @entity {
+    id: ID!
+    index: BigInt!
+    hash: Bytes!
+
+    node: Bytes!
+    label: Bytes!
+    owner: Bytes!
+}
+
+# NewResolver(bytes32 indexed node, address resolver)
+type NewResolver @entity {
+    id: ID!
+    index: BigInt!
+    hash: Bytes!
+
+    node: Bytes!
+    resolver: Bytes!
+}
+
+# NewTTL(bytes32 indexed node, uint64 ttl)
+type NewTTL @entity {
+    id: ID!
+    index: BigInt!
+    hash: Bytes!
+
+    node: Bytes!
+    ttl: BigInt!
+}
+
+type Counter @entity {
+    id: ID!
+    count: BigInt!
 }

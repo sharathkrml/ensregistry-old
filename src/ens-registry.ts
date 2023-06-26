@@ -1,59 +1,75 @@
 import { BigInt } from "@graphprotocol/graph-ts"
 import {
-  ENSRegistry,
-  Transfer,
-  NewOwner,
-  NewResolver,
-  NewTTL
+    Transfer as TransferEvent,
+    NewOwner as NewOwnerEvent,
+    NewResolver as NewResolverEvent,
+    NewTTL as NewTTLEvent,
 } from "../generated/ENSRegistry/ENSRegistry"
-import { ExampleEntity } from "../generated/schema"
+import { Counter, Transfer, NewOwner, NewResolver, NewTTL } from "../generated/schema"
 
-export function handleTransfer(event: Transfer): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
+export function handleTransfer(event: TransferEvent): void {
+    let counter = getCounter("Transfer")
 
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (!entity) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
+    let transfer = new Transfer(counter.count.toString())
+    transfer.index = counter.count
+    transfer.hash = event.transaction.hash
 
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
-  }
+    transfer.node = event.params.node
+    transfer.owner = event.params.owner
+    transfer.save()
 
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
-
-  // Entity fields can be set based on event parameters
-  entity.node = event.params.node
-  entity.owner = event.params.owner
-
-  // Entities can be written to the store with `.save()`
-  entity.save()
-
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
-
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.resolver(...)
-  // - contract.owner(...)
-  // - contract.ttl(...)
+    counter.save()
 }
 
-export function handleNewOwner(event: NewOwner): void {}
+export function handleNewOwner(event: NewOwnerEvent): void {
+    let counter = getCounter("NewOwner")
 
-export function handleNewResolver(event: NewResolver): void {}
+    let newOwner = new NewOwner(counter.count.toString())
+    newOwner.index = counter.count
+    newOwner.hash = event.transaction.hash
 
-export function handleNewTTL(event: NewTTL): void {}
+    newOwner.node = event.params.node
+    newOwner.owner = event.params.owner
+    newOwner.label = event.params.label
+    newOwner.save()
+
+    counter.save()
+}
+
+export function handleNewResolver(event: NewResolverEvent): void {
+    let counter = getCounter("NewResolver")
+
+    let newResolver = new NewResolver(counter.count.toString())
+    newResolver.index = counter.count
+    newResolver.hash = event.transaction.hash
+
+    newResolver.node = event.params.node
+    newResolver.resolver = event.params.resolver
+    newResolver.save()
+
+    counter.save()
+}
+
+export function handleNewTTL(event: NewTTLEvent): void {
+    let counter = getCounter("NewTTL")
+
+    let newTTL = new NewTTL(counter.count.toString())
+    newTTL.index = counter.count
+    newTTL.hash = event.transaction.hash
+
+    newTTL.node = event.params.node
+    newTTL.ttl = event.params.ttl
+    newTTL.save()
+
+    counter.save()
+}
+
+function getCounter(key: string): Counter {
+    let counter = Counter.load(key)
+    if (!counter) {
+        counter = new Counter(key)
+        counter.count = BigInt.fromI32(0)
+    }
+    counter.count = counter.count.plus(BigInt.fromI32(1))
+    return counter
+}
