@@ -43,3 +43,12 @@ type Counter @entity {
     id: ID!
     count: BigInt!
 }
+
+type Aggregation @entity {
+    id: ID!
+    blockNumber: BigInt!
+    transfer: [Transfer!]
+    newOwner: [NewOwner!]
+    newResolver: [NewResolver!]
+    newTTL: [NewTTL!]
+}

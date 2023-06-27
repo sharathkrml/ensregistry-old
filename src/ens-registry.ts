@@ -1,11 +1,11 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { BigInt, Bytes } from "@graphprotocol/graph-ts"
 import {
     Transfer as TransferEvent,
     NewOwner as NewOwnerEvent,
     NewResolver as NewResolverEvent,
     NewTTL as NewTTLEvent,
 } from "../generated/ENSRegistry/ENSRegistry"
-import { Counter, Transfer, NewOwner, NewResolver, NewTTL } from "../generated/schema"
+import { Counter, Transfer, NewOwner, NewResolver, NewTTL, Aggregation } from "../generated/schema"
 
 export function handleTransfer(event: TransferEvent): void {
     let counter = getCounter("Transfer")
@@ -19,6 +19,15 @@ export function handleTransfer(event: TransferEvent): void {
     transfer.save()
 
     counter.save()
+    let agg = getAggregation(event.transaction.hash)
+    agg.blockNumber = event.block.number
+    let transfers = agg.transfer
+    if (transfers == null) {
+        transfers = []
+    }
+    transfers.push(transfer.id)
+    agg.transfer = transfers
+    agg.save()
 }
 
 export function handleNewOwner(event: NewOwnerEvent): void {
@@ -34,6 +43,16 @@ export function handleNewOwner(event: NewOwnerEvent): void {
     newOwner.save()
 
     counter.save()
+
+    let agg = getAggregation(event.transaction.hash)
+    agg.blockNumber = event.block.number
+    let newOwners = agg.newOwner
+    if (newOwners == null) {
+        newOwners = []
+    }
+    newOwners.push(newOwner.id)
+    agg.newOwner = newOwners
+    agg.save()
 }
 
 export function handleNewResolver(event: NewResolverEvent): void {
@@ -48,6 +67,16 @@ export function handleNewResolver(event: NewResolverEvent): void {
     newResolver.save()
 
     counter.save()
+
+    let agg = getAggregation(event.transaction.hash)
+    agg.blockNumber = event.block.number
+    let newResolvers = agg.newResolver
+    if (newResolvers == null) {
+        newResolvers = []
+    }
+    newResolvers.push(newResolver.id)
+    agg.newResolver = newResolvers
+    agg.save()
 }
 
 export function handleNewTTL(event: NewTTLEvent): void {
@@ -62,6 +91,16 @@ export function handleNewTTL(event: NewTTLEvent): void {
     newTTL.save()
 
     counter.save()
+
+    let agg = getAggregation(event.transaction.hash)
+    agg.blockNumber = event.block.number
+    let newTTLs = agg.newTTL
+    if (newTTLs == null) {
+        newTTLs = []
+    }
+    newTTLs.push(newTTL.id)
+    agg.newTTL = newTTLs
+    agg.save()
 }
 
 function getCounter(key: string): Counter {
@@ -72,4 +111,12 @@ function getCounter(key: string): Counter {
     }
     counter.count = counter.count.plus(BigInt.fromI32(1))
     return counter
+}
+
+function getAggregation(hash: Bytes): Aggregation {
+    let entity = Aggregation.load(hash.toHexString())
+    if (!entity) {
+        entity = new Aggregation(hash.toHexString())
+    }
+    return entity
 }
