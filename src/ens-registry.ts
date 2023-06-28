@@ -1,11 +1,20 @@
-import { BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { BigInt, Bytes, ens } from "@graphprotocol/graph-ts"
 import {
     Transfer as TransferEvent,
     NewOwner as NewOwnerEvent,
     NewResolver as NewResolverEvent,
     NewTTL as NewTTLEvent,
 } from "../generated/ENSRegistry/ENSRegistry"
-import { Counter, Transfer, NewOwner, NewResolver, NewTTL, Aggregation } from "../generated/schema"
+import { RegisterCall } from "../generated/SimpleRegistrar/SimpleRegistrar"
+import {
+    Counter,
+    Transfer,
+    NewOwner,
+    NewResolver,
+    NewTTL,
+    Aggregation,
+    Register,
+} from "../generated/schema"
 
 export function handleTransfer(event: TransferEvent): void {
     let counter = getCounter("Transfer")
@@ -15,6 +24,7 @@ export function handleTransfer(event: TransferEvent): void {
     transfer.hash = event.transaction.hash
 
     transfer.node = event.params.node
+
     transfer.owner = event.params.owner
     transfer.save()
 
@@ -37,6 +47,16 @@ export function handleNewOwner(event: NewOwnerEvent): void {
     newOwner.index = counter.count
     newOwner.hash = event.transaction.hash
 
+    let nodeName = ens.nameByHash(event.params.node.toHexString())
+    if (nodeName == null) {
+        nodeName = ""
+    }
+    newOwner.nodeName = nodeName!
+    let labelName = ens.nameByHash(event.params.label.toHexString())
+    if (labelName == null) {
+        labelName = ""
+    }
+    newOwner.labelName = labelName!
     newOwner.node = event.params.node
     newOwner.owner = event.params.owner
     newOwner.label = event.params.label
@@ -100,6 +120,29 @@ export function handleNewTTL(event: NewTTLEvent): void {
     }
     newTTLs.push(newTTL.id)
     agg.newTTL = newTTLs
+    agg.save()
+}
+
+export function handleRegister(call: RegisterCall): void {
+    let counter = getCounter("RegisterCall")
+
+    let entity = new Register(counter.count.toString())
+    entity.index = counter.count
+    entity.hash = call.transaction.hash
+
+    entity.name = call.inputs.name
+    entity.save()
+
+    counter.save()
+
+    let agg = getAggregation(call.transaction.hash)
+    agg.blockNumber = call.block.number
+    let registers = agg.register
+    if (registers == null) {
+        registers = []
+    }
+    registers.push(entity.id)
+    agg.register = registers
     agg.save()
 }
 

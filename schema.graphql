@@ -15,7 +15,9 @@ type NewOwner @entity {
     hash: Bytes!
 
     node: Bytes!
+    nodeName: String!
     label: Bytes!
+    labelName: String!
     owner: Bytes!
 }
 
@@ -51,4 +53,12 @@ type Aggregation @entity {
     newOwner: [NewOwner!]
     newResolver: [NewResolver!]
     newTTL: [NewTTL!]
+    register: [Register!]
+}
+type Register @entity {
+    id: ID!
+    index: BigInt!
+    hash: Bytes!
+
+    name: String!
 }
